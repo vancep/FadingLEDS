@@ -4,83 +4,47 @@
 
 #include <stdio.h>
 
-#define NUMLEDS 8
 #define STARTINGPIN 2
 
-int* ledPtr;
-int* brightnessPtr;
-int* fadePtr;
+unsigned char leds = 0; // 1 bit per led indicating whether it is on or off
+unsigned char* ledsPtr = &leds;
 
-void setupLedPtr(int* lPtr);
-void setupBrightnessPtr(int* bPtr);
-void setupFadePtr(int* fPtr);
-
-void writeBrightnessToPins(int* lPtr, int* bPtr);
-void updateBrigntness(int* bPtr, int* fPtr);
+unsigned int brightness[8];
+unsigned int *bPtr;
 
 void setup() 
 {
-  ledPtr = (int*) malloc(sizeof(int) * NUMLEDS);
-  brightnessPtr = (int*) malloc(sizeof(int) * NUMLEDS);
-  fadePtr = (int*) malloc(sizeof(int) * NUMLEDS);
+  *ledsPtr = 0;
 
-  setupLedPtr(ledPtr);
-  setupBrightnessPtr(brightnessPtr);
-  setupFadePtr(fadePtr);
 }
 
 void loop() 
 {
-  writeBrightnessToPins(ledPtr, brightnessPtr);
+  writeToLeds(ledsPtr);
 
-  updateBrigntness(brightnessPtr, fadePtr);
-}
+  (*ledsPtr)++;
+  if(*ledsPtr >= 256)
+    *ledsPtr = 0;
 
-void setupLedPtr(int* lPtr)
-{
-  for(int i = 0; i < NUMLEDS; i++)
-  {
-    *(lPtr + i) = STARTINGPIN + i;
-  }
-}
-
-void setupBrightnessPtr(int* bPtr)
-{
-  for(int i = 0; i < NUMLEDS; i++)
-  {
-    *(bPtr + i) = (int)((255 / NUMLEDS) * i);
-  }
-}
-
-void setupFadePtr(int* fPtr)
-{
-  for(int i = 0; i < NUMLEDS; i++)
-  {
-    *(fPtr + i) = 5;
-  }
-}
-
-void writeBrightnessToPins(int* lPtr, int* bPtr)
-{
-  for(int i = 0; i < NUMLEDS; i++)
-  {
-    analogWrite(*(lPtr + i), *(bPtr + i));
-  }
-}
-
-void updateBrigntness(int* bPtr, int* fPtr)
-{
-  for(int i = 0; i < NUMLEDS; i++)
-  {
-    *(bPtr + i) = *(bPtr + i) + *(fPtr + i);
-
-    if (*(bPtr + i) <= 10 || *(bPtr + i) >= 255) 
-    {
-      *(fPtr + i) = *(fPtr + i) * -1;
-    }
-  }
-
-  // wait for 30 milliseconds to see the dimming effect
   delay(100);
+}
+
+void writeToLeds(unsigned char* lPtr)
+{
+  unsigned char mask = 1;
+  
+  for(int i = 0; i < 8; i++)
+  {
+    if((*lPtr & mask) == mask)
+    {
+      analogWrite(STARTINGPIN + i, 255);
+    }
+    else
+    {
+      analogWrite(STARTINGPIN + i, 0);
+    }
+
+    mask <<= 1;
+  }  
 }
 
