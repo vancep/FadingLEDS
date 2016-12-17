@@ -7,64 +7,80 @@
 #define NUMLEDS 8
 #define STARTINGPIN 2
 
-unsigned short leds[NUMLEDS];
-unsigned short *ledPtr;
+int* ledPtr;
+int* brightnessPtr;
+int* fadePtr;
 
-unsigned short brightness[NUMLEDS];
-unsigned short *brightnessPtr;
+void setupLedPtr(int* lPtr);
+void setupBrightnessPtr(int* bPtr);
+void setupFadePtr(int* fPtr);
 
-unsigned short fadeAmount[NUMLEDS];
-unsigned short *fadePtr;
-  
+void writeBrightnessToPins(int* lPtr, int* bPtr);
+void updateBrigntness(int* bPtr, int* fPtr);
+
 void setup() 
 {
-  ledPtr = leds;
-  brightnessPtr = brightness;
-  fadePtr = fadeAmount;
-  
-  // assign each led a pin, set default brightness, set pin to output
-  // Note: This loop is assuming that the pins are in consecutive locations
-  for(unsigned short i = 0; i < NUMLEDS; i++)
-  {
-    // assign led
-    *(ledPtr + i) = STARTINGPIN + i;
+  ledPtr = (int*) malloc(sizeof(int) * NUMLEDS);
+  brightnessPtr = (int*) malloc(sizeof(int) * NUMLEDS);
+  fadePtr = (int*) malloc(sizeof(int) * NUMLEDS);
 
-    // set default brightness for each pin
-    *(brightnessPtr + i) = (255 / NUMLEDS) * i;
-
-    // set pin to output
-    pinMode(*(ledPtr + i), OUTPUT);
-
-    // set fadeAmount
-    *(fadePtr + i) = 5;
-  }
+  setupLedPtr(ledPtr);
+  setupBrightnessPtr(brightnessPtr);
+  setupFadePtr(fadePtr);
 }
 
 void loop() 
 {
-  setBrightnessOfPins(ledPtr, brightnessPtr);
+  writeBrightnessToPins(ledPtr, brightnessPtr);
 
-  updateBrightness(brightnessPtr);
+  updateBrigntness(brightnessPtr, fadePtr);
 }
 
-void setBrightnessOfPins(unsigned short* lPtr, unsigned short* bPtr)
+void setupLedPtr(int* lPtr)
 {
-  for(unsigned short i = 0; i < NUMLEDS; i++)
+  for(int i = 0; i < NUMLEDS; i++)
+  {
+    *(lPtr + i) = STARTINGPIN + i;
+  }
+}
+
+void setupBrightnessPtr(int* bPtr)
+{
+  for(int i = 0; i < NUMLEDS; i++)
+  {
+    *(bPtr + i) = (int)((255 / NUMLEDS) * i);
+  }
+}
+
+void setupFadePtr(int* fPtr)
+{
+  for(int i = 0; i < NUMLEDS; i++)
+  {
+    *(fPtr + i) = 5;
+  }
+}
+
+void writeBrightnessToPins(int* lPtr, int* bPtr)
+{
+  for(int i = 0; i < NUMLEDS; i++)
   {
     analogWrite(*(lPtr + i), *(bPtr + i));
   }
 }
 
-void updateBrightness(unsigned short* bPtr)
+void updateBrigntness(int* bPtr, int* fPtr)
 {
-  for(unsigned short i = 0; i < NUMLEDS; i++)
+  for(int i = 0; i < NUMLEDS; i++)
   {
-    *(bPtr + i) = *(bPtr + i) + fadeAmount;
+    *(bPtr + i) = *(bPtr + i) + *(fPtr + i);
 
-    if (*(bPtr + i) <= 0 || *(bPtr + i) >= 255) 
+    if (*(bPtr + i) <= 10 || *(bPtr + i) >= 255) 
     {
-      *(fadeAmount + i) = -1 * *(fadeAmount + i);
+      *(fPtr + i) = *(fPtr + i) * -1;
     }
   }
+
+  // wait for 30 milliseconds to see the dimming effect
+  delay(100);
 }
 
