@@ -10,17 +10,23 @@ unsigned char leds = 0; // 1 bit per led indicating whether it is on or off
 unsigned char* ledsPtr = &leds;
 
 unsigned int brightness[8];
-unsigned int *bPtr;
+unsigned int* brightnessPtr = &brightness[0];
 
 void setup() 
 {
   *ledsPtr = 0;
 
+  // sets initial brightness for each led
+  for(int i = 0; i < 8; i++)
+  {
+    brightnessPtr[i] = 255;
+  }
+
 }
 
 void loop() 
 {
-  writeToLeds(ledsPtr);
+  writeToLeds(ledsPtr, brightnessPtr);
 
   (*ledsPtr)++;
   if(*ledsPtr >= 256)
@@ -29,7 +35,8 @@ void loop()
   delay(100);
 }
 
-void writeToLeds(unsigned char* lPtr)
+// if the bit corresponding to a led is set to 1, write its brightness, otherwise, just turn it off
+void writeToLeds(unsigned char* lPtr, unsigned int* bPtr)
 {
   unsigned char mask = 1;
   
@@ -37,7 +44,7 @@ void writeToLeds(unsigned char* lPtr)
   {
     if((*lPtr & mask) == mask)
     {
-      analogWrite(STARTINGPIN + i, 255);
+      analogWrite(STARTINGPIN + i, bPtr[i]);
     }
     else
     {
